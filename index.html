@@ -29,6 +29,23 @@
       font-size: 30px;
       margin-top: 20px;
     }
+    #upgrade {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: #ffcc00; /* default active color */
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    #upgrade.disabled {
+      background-color: #bfa300; /* darker color when not enough points */
+      cursor: not-allowed;
+    }
+    #upgrade:hover:not(.disabled) {
+      background-color: #ffdb4d;
+    }
     h1 {
       font-size: 42px;
       color: #663399;
@@ -40,16 +57,50 @@
   <h1>🐾 Cat Clicker 🐾</h1>
   <div id="clicker" title="Click the cat!"></div>
   <div id="score">Points: 0</div>
+  <button id="upgrade">Upgrade Paw Power (Cost: 10)</button>
 
   <script>
     let score = 0;
+    let pointsPerClick = 1;
+    let upgradeCost = 10; // starting cost of upgrade
+
     const clicker = document.getElementById('clicker');
     const scoreDisplay = document.getElementById('score');
+    const upgradeButton = document.getElementById('upgrade');
 
+    // Function to update the upgrade button's text and style
+    function updateUpgradeButton() {
+      upgradeButton.textContent = `Upgrade Paw Power (Now: +${pointsPerClick}, Cost: ${upgradeCost})`;
+
+      if (score >= upgradeCost) {
+        upgradeButton.classList.remove('disabled');
+      } else {
+        upgradeButton.classList.add('disabled');
+      }
+    }
+
+    // When the cat is clicked
     clicker.addEventListener('click', () => {
-      score++;
+      score += pointsPerClick;
       scoreDisplay.textContent = 'Points: ' + score;
+      updateUpgradeButton(); // check if upgrade is now affordable
     });
+
+    // When the upgrade button is clicked
+    upgradeButton.addEventListener('click', () => {
+      if (score >= upgradeCost) {
+        score -= upgradeCost; // subtract cost
+        pointsPerClick++; // increase click power
+        upgradeCost = Math.floor(upgradeCost * 1.5); // increase cost for next upgrade
+        scoreDisplay.textContent = 'Points: ' + score;
+        updateUpgradeButton();
+      } else {
+        alert('Not enough points!');
+      }
+    });
+
+    // Initial button update
+    updateUpgradeButton();
   </script>
 
 </body>
