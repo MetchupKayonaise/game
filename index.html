@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cat Clicker</title>
+  <style>
+    body {
+      font-family: 'Comic Sans MS', courier;
+      text-align: center;
+      background-color: #cceeff;
+      color: #333;
+      margin-top: 50px;
+    }
+    #clicker {
+      width: 250px;
+      height: 250px;
+      background-image: url('https://i.imgur.com/3nhx9zF.gif');
+      background-size: cover;
+      border: 5px solid #4a90e2;
+      border-radius: 50%;
+      margin: 20px auto;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    #clicker:active {
+      transform: scale(0.95);
+    }
+    #score {
+      font-size: 30px;
+      margin-top: 20px;
+    }
+    h1 {
+      font-size: 42px;
+      color: #663399;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🐾 Cat Clicker 🐾</h1>
+  <div id="clicker" title="Click the cat!"></div>
+  <div id="score">Points: 0</div>
+
+  <script>
+    let score = 0;
+    const clicker = document.getElementById('clicker');
+    const scoreDisplay = document.getElementById('score');
+
+    clicker.addEventListener('click', () => {
+      score++;
+      scoreDisplay.textContent = 'Points: ' + score;
+    });
+  </script>
+
+</body>
+</html>
