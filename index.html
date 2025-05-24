@@ -4,13 +4,17 @@
   <meta charset="UTF-8">
   <title>Cat Clicker</title>
   <style>
+    /* General style settings */
     body {
       font-family: 'Comic Sans MS', courier;
       text-align: center;
       background-color: #cceeff;
       color: #333;
       margin-top: 50px;
+      overflow: hidden;
     }
+    
+    /* Style for the cat clicker button */
     #clicker {
       width: 250px;
       height: 250px;
@@ -21,86 +25,289 @@
       margin: 20px auto;
       cursor: pointer;
       transition: transform 0.1s;
+      position: relative;
     }
+
+    /* Scale effect when the cat is clicked */
     #clicker:active {
       transform: scale(0.95);
     }
+
+    /* Style for the score display */
     #score {
       font-size: 30px;
       margin-top: 20px;
     }
-    #upgrade {
+
+    /* Style for the buttons */
+    button {
       margin-top: 20px;
       padding: 10px 20px;
       font-size: 18px;
-      background-color: #ffcc00; /* default active color */
       border: none;
       border-radius: 8px;
       cursor: pointer;
       transition: background-color 0.2s;
     }
-    #upgrade.disabled {
-      background-color: #bfa300; /* darker color when not enough points */
+
+    /* Style for the upgrade and autoclicker buttons */
+    #upgrade {
+      background-color: #ffcc00;
+    }
+    #autoclicker {
+      background-color: #66cc66;
+    }
+
+    /* Disable button when the player can't afford the upgrade */
+    .disabled {
+      background-color: #aaa !important;
       cursor: not-allowed;
     }
+
+    /* Hover effect for the upgrade button */
     #upgrade:hover:not(.disabled) {
       background-color: #ffdb4d;
     }
+
+    /* Hover effect for the autoclicker button */
+    #autoclicker:hover:not(.disabled) {
+      background-color: #7fe67f;
+    }
+
+    /* Title style */
     h1 {
       font-size: 42px;
       color: #663399;
     }
+
+    /* Style for floating text and particles */
+    .particle, .floating-text {
+      position: absolute;
+      pointer-events: none;
+      user-select: none;
+      font-size: 18px;
+      opacity: 1;
+      animation: floatUp 1s ease-out forwards;
+    }
+
+    /* Particle styling */
+    .particle {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background-color: #ff66cc;
+    }
+
+    /* Style for floating text when clicking and auto-clicking */
+    .floating-text.auto {
+      color: #00ccff;
+    }
+    .floating-text.click {
+      color: #ff6600;
+    }
+
+    /* Animation for floating text */
+    @keyframes floatUp {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-40px); opacity: 0; }
+    }
+
+    /* Style for the sliding shop toggle button */
+    #shop-toggle {
+      position: fixed;
+      top: 50%;
+      right: 0;
+      width: 30px;
+      height: 60px;
+      background-color: #6666cc;
+      color: white;
+      font-size: 24px;
+      line-height: 60px;
+      text-align: center;
+      cursor: pointer;
+      border-top-left-radius: 8px;
+      border-bottom-left-radius: 8px;
+      z-index: 1000;
+    }
+
+    /* Style for the shop menu */
+    #shop {
+      position: fixed;
+      top: 0;
+      right: -220px; /* Start hidden off-screen */
+      width: 200px;
+      height: 100%;
+      background-color: #eef;
+      box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+      padding: 20px;
+      transition: right 0.3s; /* Smooth transition when the shop slides */
+      overflow-y: auto;
+      z-index: 999;
+    }
+
+    /* Class to make the shop open */
+    #shop.open {
+      right: 0; /* Slide the shop in */
+    }
+
+    /* Style for the shop menu heading */
+    #shop h2 {
+      margin-top: 0;
+      font-size: 20px;
+      color: #444;
+    }
+
+    /* Style for the buttons inside the shop */
+    #shop button {
+      display: block;
+      margin: 15px 0;
+      width: 100%;
+    }
+
   </style>
 </head>
 <body>
 
+  <!-- Title of the game -->
   <h1>🐾 Cat Clicker 🐾</h1>
+
+  <!-- The clickable cat button -->
   <div id="clicker" title="Click the cat!"></div>
+
+  <!-- Score display -->
   <div id="score">Points: 0</div>
-  <button id="upgrade">Upgrade Paw Power (Cost: 10)</button>
+
+  <!-- The sliding shop toggle button -->
+  <div id="shop-toggle">◀</div>
+
+  <!-- The sliding shop with upgrade buttons -->
+  <div id="shop">
+    <h2>Upgrades</h2>
+    <button id="upgrade">Upgrade Paw Power (Cost: 10)</button>
+    <button id="autoclicker">Buy Auto Clicker (Cost: 50)</button>
+  </div>
 
   <script>
+    // Game variables
     let score = 0;
     let pointsPerClick = 1;
-    let upgradeCost = 10; // starting cost of upgrade
+    let upgradeCost = 10;
+    let autoClickerCost = 50;
+    let autoClickers = 0;
 
+    // Get elements from the DOM
     const clicker = document.getElementById('clicker');
     const scoreDisplay = document.getElementById('score');
     const upgradeButton = document.getElementById('upgrade');
+    const autoClickerButton = document.getElementById('autoclicker');
 
-    // Function to update the upgrade button's text and style
-    function updateUpgradeButton() {
+    // Function to update the score display
+    function updateScore() {
+      scoreDisplay.textContent = 'Points: ' + score;
+    }
+
+    // Function to update the buttons based on score
+    function updateButtons() {
       upgradeButton.textContent = `Upgrade Paw Power (Now: +${pointsPerClick}, Cost: ${upgradeCost})`;
+      autoClickerButton.textContent = `Buy Auto Clicker (Owned: ${autoClickers}, Cost: ${autoClickerCost})`;
 
-      if (score >= upgradeCost) {
-        upgradeButton.classList.remove('disabled');
-      } else {
-        upgradeButton.classList.add('disabled');
+      // Disable buttons when player can't afford upgrades
+      upgradeButton.disabled = score < upgradeCost;
+      upgradeButton.classList.toggle('disabled', score < upgradeCost);
+      autoClickerButton.disabled = score < autoClickerCost;
+      autoClickerButton.classList.toggle('disabled', score < autoClickerCost);
+    }
+
+    // Function to spawn floating text (displaying points earned)
+    function spawnFloatingText(x, y, text, type) {
+      const span = document.createElement('span');
+      span.className = `floating-text ${type}`;
+      span.textContent = "+" + text;
+      span.style.left = x + 'px';
+      span.style.top = y + 'px';
+      document.body.appendChild(span);
+      setTimeout(() => span.remove(), 1000); // Remove floating text after 1 second
+    }
+
+    // Function to spawn particles when clicking the cat
+    function spawnParticles(x, y) {
+      for (let i = 0; i < 8; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = x + 'px';
+        p.style.top = y + 'px';
+        p.style.position = 'absolute';
+        document.body.appendChild(p);
+
+        const dx = (Math.random() - 0.5) * 100;
+        const dy = (Math.random() - 0.5) * 100;
+        p.animate([
+          { transform: 'translate(0, 0)', opacity: 1 },
+          { transform: `translate(${dx}px, ${dy}px)`, opacity: 0 }
+        ], {
+          duration: 600,
+          easing: 'ease-out'
+        });
+        setTimeout(() => p.remove(), 600); // Remove particles after 600ms
       }
     }
 
-    // When the cat is clicked
-    clicker.addEventListener('click', () => {
-      score += pointsPerClick;
-      scoreDisplay.textContent = 'Points: ' + score;
-      updateUpgradeButton(); // check if upgrade is now affordable
+    // Event listener for when the cat is clicked
+    clicker.addEventListener('click', e => {
+      score += pointsPerClick; // Increase score
+      updateScore(); // Update score display
+      updateButtons(); // Update button states
+      spawnFloatingText(e.clientX, e.clientY, pointsPerClick, 'click'); // Show floating text
+      spawnParticles(e.clientX, e.clientY); // Spawn particles at click location
     });
 
-    // When the upgrade button is clicked
+    // Event listener for when the upgrade button is clicked
     upgradeButton.addEventListener('click', () => {
-      if (score >= upgradeCost) {
-        score -= upgradeCost; // subtract cost
-        pointsPerClick++; // increase click power
-        upgradeCost = Math.floor(upgradeCost * 1.5); // increase cost for next upgrade
-        scoreDisplay.textContent = 'Points: ' + score;
-        updateUpgradeButton();
-      } else {
-        alert('Not enough points!');
+      if (score >= upgradeCost) { // Check if player can afford upgrade
+        score -= upgradeCost; // Deduct cost
+        pointsPerClick++; // Increase points per click
+        upgradeCost = Math.floor(upgradeCost * 1.5); // Increase upgrade cost
+        updateScore(); // Update score display
+        updateButtons(); // Update button states
       }
     });
 
-    // Initial button update
-    updateUpgradeButton();
+    // Event listener for when the auto-clicker button is clicked
+    autoClickerButton.addEventListener('click', () => {
+      if (score >= autoClickerCost) { // Check if player can afford auto-clicker
+        score -= autoClickerCost; // Deduct cost
+        autoClickers++; // Increase the number of auto-clickers
+        autoClickerCost = Math.floor(autoClickerCost * 1.6); // Increase auto-clicker cost
+        updateScore(); // Update score display
+        updateButtons(); // Update button states
+      }
+    });
+
+    // Auto-clicker functionality (running every second)
+    setInterval(() => {
+      if (autoClickers > 0) {
+        score += autoClickers; // Add points from auto-clickers
+        updateScore(); // Update score display
+        updateButtons(); // Update button states
+        const clickerRect = clicker.getBoundingClientRect();
+        const x = clickerRect.left + clickerRect.width / 2;
+        const y = clickerRect.top + clickerRect.height / 2;
+        spawnFloatingText(x, y, autoClickers, 'auto'); // Show floating text for auto-click
+      }
+    }, 1000);
+
+    // Sliding Shop Toggle
+    const shop = document.getElementById('shop');
+    const shopToggle = document.getElementById('shop-toggle');
+
+    // Event listener to toggle the shop visibility
+    shopToggle.addEventListener('click', () => {
+      shop.classList.toggle('open');
+      shopToggle.textContent = shop.classList.contains('open') ? '▶' : '◀';
+    });
+
+    // Initial update to buttons
+    updateButtons();
   </script>
 
 </body>
